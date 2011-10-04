@@ -7,10 +7,7 @@ exports.servers = function(){
   };
 };
 
-exports.self = function(){
-  return 'server1';
-};
-
-exports.listenPort = function(){
-  return 80;
-};
+exports.self = 'server1';
+exports.port = 80;
+exports.pingInterval = 15000;
+exports.postInterval = 15000;
