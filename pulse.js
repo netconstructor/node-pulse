@@ -7,6 +7,8 @@ var servers = config.servers();
 
 var app = module.exports = express.createServer();
 
+var verbose = false;
+
 app.configure(function(){
   app.set('views', __dirname + '/views');
   app.set('view engine', 'ejs');
@@ -52,19 +54,22 @@ app.get('/servers', function(req, res){
 });
 
 app.get('/echo/:echo', function(req, res){
-  console.log((new Date()) + " "+req.connection.remoteAddress+" "+req.params.echo);
+  if(verbose)
+    console.log((new Date()) + " "+req.connection.remoteAddress+" "+req.params.echo);
   res.write(req.params.echo);
   res.end();
 });
 
 app.post('/collect', function(req, res){
-  console.log('/collect');
+  if(verbose)
+    console.log('/collect');
   var data = '';
   req.addListener('data', function(chunk){ 
     data += chunk; 
   });
   req.addListener('end', function(){
-    console.log(data);
+    if(verbose)
+      console.log(data);
     var timings = JSON.parse(data);
     stats[timings.self] = timings.stats;
   });
@@ -77,11 +82,13 @@ console.log("Server: "+config.self);
 setInterval(function(){
 
   var startTime = microtime.nowDouble();
-  console.log("Gathering timing data at "+startTime);
+  if(verbose)
+    console.log("Gathering timing data at "+startTime);
   
   for(var i in servers){
     if(i != config.self) { 
-      console.log('\t'+i+'/'+servers[i]);
+      if(verbose)
+        console.log('\t'+i+'/'+servers[i]);
       (function(){
         var hostname = servers[i];
         var servername = i;
@@ -105,13 +112,15 @@ setInterval(function(){
           }
           stats[config.self][servername] = {ms: ms, date: Math.round(microtime.nowDouble())};
           
-          console.log('\t['+servername+'/'+hostname+'] Duration: '+ms);
+          if(verbose)
+            console.log('\t['+servername+'/'+hostname+'] Duration: '+ms);
         });
         
         var timeout = setTimeout(function(){
           req.removeAllListeners('response');
           var ms = Math.round((microtime.nowDouble()-startTime)*1000);
-          console.log('\t['+servername+'/'+hostname+'] Timed out after: '+ms);
+          if(verbose)
+            console.log('\t['+servername+'/'+hostname+'] Timed out after: '+ms);
   
           if(typeof stats[config.self] == "undefined"){
             stats[config.self] = {};
@@ -129,10 +138,12 @@ setInterval(function(){
 
 setTimeout(function(){
   setInterval(function(){
-    console.log('Sending stats to servers...');
+    if(verbose)
+      console.log('Sending stats to servers...');
     for(var i in servers){
       if(i != config.self) {
-        console.log('\t'+i+'/'+servers[i]);
+        if(verbose)
+          console.log('\t'+i+'/'+servers[i]);
         (function(){
           var postbody = JSON.stringify({
             self: config.self,
@@ -154,7 +165,8 @@ setTimeout(function(){
           req.on('error', function(e) {
             console.log('\t['+servername+'/'+hostname+'] Error sending stats: '+e.message);
           });
-          console.log('\tPost body: '+postbody);
+          if(verbose)
+            console.log('\tPost body: '+postbody);
           req.write(postbody);
           req.end();
         })();
