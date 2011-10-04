@@ -1,19 +1,24 @@
 <% if (stats) { %>
+<h3>Ping Times</h3>
+
 <table class="stats">
   <tr>
-    <td></td>
+    <th></th>
     <% for(var i in servers) { %>
-      <td><%= i %></td>
+      <th><%= i %></th>
     <% } %>
   </tr>
    <% for(var i in servers) { %>
     <tr>
-      <td><%= i %></td>
+      <th><%= i %></th>
       <% for(var j in servers) { %>
         <td>
           <% if(i != j) { %>
             <% if(typeof stats[i] != "undefined" && typeof stats[i][j] != "undefined") { %>
-              <div title="age: <%= (now-stats[i][j].date) %> seconds"><%= stats[i][j].ms %></div>
+              <div title="age: <%= (now-stats[i][j].date) %> seconds" 
+                   class="<%= (now-stats[i][j].date > 30 ? "stale" : "") %> <%= (stats[i][j].ms == -1 ? "timeout" : "") %>">
+                <%- (stats[i][j].ms == -1 ? "&#8734;" : stats[i][j].ms+"ms") %>
+              </div>
             <% } %>
           <% } %>
         </td>

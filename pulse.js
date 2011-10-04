@@ -57,7 +57,7 @@ app.get('/echo/:echo', function(req, res){
   res.end();
 });
 
-app.post('/receive', function(req, res){
+app.post('/collect', function(req, res){
   console.log(req.params);
 });
 
@@ -71,49 +71,86 @@ setInterval(function(){
   console.log("Gathering timing data at "+startTime);
   
   for(var i in servers){
-    console.log('\t'+i+'/'+servers[i]);
-    
-    (function(){
-      var hostname = servers[i];
-      var servername = i;
-      var req = http.request({
-        host: hostname,
-        port: config.port,
-        path: "/echo/hi",
-        method: "GET",
-        headers: {'Connection': 'close'}
-      });
-      req.on('error', function(e) {
-        console.log('\t['+servername+'/'+hostname+'] Error: '+e.message);
-      });
-      req.on('response', function(res){
-        clearTimeout(timeout);
-        var ms = Math.round((microtime.nowDouble()-startTime)*1000);
+    if(i != config.self) { 
+      console.log('\t'+i+'/'+servers[i]);
+      (function(){
+        var hostname = servers[i];
+        var servername = i;
+        var req = http.request({
+          host: hostname,
+          port: config.port,
+          path: "/echo/hi",
+          method: "GET",
+          headers: {'Connection': 'close'}
+        });
+        req.on('error', function(e) {
+          console.log('\t['+servername+'/'+hostname+'] Error: '+e.message);
+        });
+        req.on('response', function(res){
+          clearTimeout(timeout);
+          var ms = Math.round((microtime.nowDouble()-startTime)*1000);
+          
+          // Store the result in the stats object
+          if(typeof stats[config.self] == "undefined"){
+            stats[config.self] = {};
+          }
+          stats[config.self][servername] = {ms: ms, date: Math.round(microtime.nowDouble())};
+          
+          console.log('\t['+servername+'/'+hostname+'] Duration: '+ms);
+        });
         
-        // Store the result in the stats object
-        if(typeof stats[config.self] == "undefined"){
-          stats[config.self] = {};
-        }
-        stats[config.self][servername] = {ms: ms, date: Math.round(microtime.nowDouble())};
+        var timeout = setTimeout(function(){
+          req.removeAllListeners('response');
+          var ms = Math.round((microtime.nowDouble()-startTime)*1000);
+          console.log('\t['+servername+'/'+hostname+'] Timed out after: '+ms);
+  
+          if(typeof stats[config.self] == "undefined"){
+            stats[config.self] = {};
+          }
+          stats[config.self][servername] = {ms: -1, date: Math.round(microtime.nowDouble())};
+          
+        }, 5000);
         
-        console.log('\t['+servername+'/'+hostname+'] Duration: '+ms);
-      });
-      
-      var timeout = setTimeout(function(){
-        req.removeAllListeners('response');
-        var ms = Math.round((microtime.nowDouble()-startTime)*1000);
-        console.log('\t['+servername+'/'+hostname+'] Timed out after: '+ms);
-      }, 2000);
-      
-      req.end();
-    })();
+        req.end();
+      })();
+    }
   }
   
 }, config.pingInterval);
 
 setTimeout(function(){
   setInterval(function(){
-    console.log(stats);
+    console.log('Sending stats to servers...');
+    for(var i in servers){
+      if(i != config.self) {
+        console.log('\t'+i+'/'+servers[i]);
+        (function(){
+          var postbody = JSON.stringify({
+            self: config.self,
+            stats: stats[config.self]
+          });
+        
+          var hostname = servers[i];
+          var servername = i;
+          var req = http.request({
+            host: hostname,
+            port: config.port,
+            path: "/collect",
+            method: "POST",
+            headers: {
+              'Content-type': 'application/json',
+              'Content-length': postbody.length
+            }
+          });
+          req.on('error', function(e) {
+            console.log('\t['+servername+'/'+hostname+'] Error sending stats: '+e.message);
+          });
+          console.log('\tPost body: '+postbody);
+          req.write(postbody);
+          req.end();
+        })();
+      }
+    }
   }, config.postInterval);
 }, 1000); // give the gather function a 1-second head start
 
