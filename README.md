@@ -13,7 +13,7 @@ Start the scripts on all the servers as background processes, such as with this 
 `nohup node pulse.js &` They will begin collecting timing information from each server in the list,
 and will send that information to each other server as well.
 
-You can then visit http://example.com:50505/stats in a browser to see its report.
+You can then visit http://example.com:50505/stats on any one of the servers to see its report.
 
 
 License
