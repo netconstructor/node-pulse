@@ -7,6 +7,10 @@ exports.servers = function(){
   };
 };
 
+exports.self = function(){
+  return 'server1';
+};
+
 exports.listenPort = function(){
   return 80;
-}
+};

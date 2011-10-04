@@ -1,0 +1,26 @@
+<% if (stats) { %>
+<table class="stats">
+  <tr>
+    <td></td>
+    <% for(var i in servers) { %>
+      <td><%= i %></td>
+    <% } %>
+  </tr>
+   <% for(var i in servers) { %>
+    <tr>
+      <td><%= i %></td>
+      <% for(var j in servers) { %>
+        <td>
+          <% if(i != j) { %>
+            <% if(typeof stats[i] != "undefined" && typeof stats[i][j] != "undefined") { %>
+              <div title="age: <%= (now-stats[i][j].date) %> seconds"><%= stats[i][j].ms %></div>
+            <% } %>
+          <% } %>
+        </td>
+      <% } %>
+    </tr>
+  <% } %>  
+</table>
+<% } else { %>
+  No stats gathered yet
+<% } %>
