@@ -58,7 +58,16 @@ app.get('/echo/:echo', function(req, res){
 });
 
 app.post('/collect', function(req, res){
-  console.log(req.params);
+  console.log('/collect');
+  var data = '';
+  req.addListener('data', function(chunk){ 
+    data += chunk; 
+  });
+  req.addListener('end', function(){
+    console.log(data);
+    var timings = JSON.parse(data);
+    stats[timings.self] = timings.stats;
+  });
 });
 
 app.listen(config.port);
@@ -138,7 +147,7 @@ setTimeout(function(){
             path: "/collect",
             method: "POST",
             headers: {
-              'Content-type': 'application/json',
+              'Content-type': 'text/json',
               'Content-length': postbody.length
             }
           });
