@@ -1,4 +1,4 @@
-Collects ping times from a list of servers and displays in a chart.
+Collects ping times between a list of servers and displays in a chart.
 
 ![Node Pulse](http://aaronpk.github.com/node-pulse.png "Node Pulse")
 
